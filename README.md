@@ -5,6 +5,7 @@
 [![Travis Status for henson/proxypool](https://travis-ci.org/henson/proxypool.svg?branch=master)](https://travis-ci.org/henson/proxypool) [![Go Report Card](https://goreportcard.com/badge/github.com/henson/proxypool)](https://goreportcard.com/report/github.com/henson/proxypool)
 
 ## 版本更新
+-2023年  支持无gcc sqlite库  做了一些简单的存活轮询
 - 2019年12月18日 v2.4 感谢 [@sndnvaps](https://github.com/sndnvaps)
   - 添加代理网站 ip3306, plp-ssl 两个
   - 更新 数据库结构，添加创建时间和更新时间
