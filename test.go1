@@ -1,0 +1,85 @@
+package main1
+
+import (
+	"fmt"
+	"math/rand"
+	"net"
+	"time"
+)
+
+type ProxyServerTest struct {
+	ser      net.Listener
+	proxyIPs []string
+}
+
+func NewProxyServerTest(proxyIPs []string) *ProxyServerTest {
+	return &ProxyServerTest{
+		proxyIPs: proxyIPs,
+	}
+}
+
+func (p *ProxyServerTest) Run() {
+	var err error
+
+	p.ser, err = net.Listen("tcp", ":9999")
+	if err != nil {
+		fmt.Printf("[-]The local service: %v\n", err)
+		return
+	}
+	defer p.ser.Close()
+
+	for {
+		client, err := p.ser.Accept()
+		if err != nil {
+			fmt.Printf("[-]Error accepting client: %v\n", err)
+			continue
+		}
+		fmt.Printf("[*]accept %s connect\n", client.RemoteAddr())
+
+		go p.handleClient(client)
+	}
+}
+
+func (p *ProxyServerTest) handleClient(client net.Conn) {
+	defer client.Close()
+
+	data := make([]byte, 1024)
+	_, err := client.Read(data)
+	if err != nil {
+		fmt.Printf("[-]Local receiving client: %v\n", err)
+		return
+	}
+	fmt.Printf("[*%s]: Accept data...\n", time.Now())
+
+	proxyIP := p.proxyIPs[rand.Intn(len(p.proxyIPs))]
+	mbsocket, err := net.DialTimeout("tcp", proxyIP, 3*time.Second)
+	if err != nil {
+		fmt.Printf("[-]RE_Connect...\n")
+		return
+	}
+	defer mbsocket.Close()
+
+	_, err = mbsocket.Write(data)
+	if err != nil {
+		fmt.Printf("[-]Sent to the proxy server: %v\n", err)
+		return
+	}
+
+	data1 := make([]byte, 1024)
+	_, err = mbsocket.Read(data1)
+	if err != nil {
+		fmt.Printf("[-]Back to the client: %v\n", err)
+		return
+	}
+	fmt.Printf("[*%s]: Send data...\n", time.Now())
+
+	_, err = client.Write(data1)
+	if err != nil {
+		fmt.Printf("[-]Error sending data back to client: %v\n", err)
+	}
+}
+
+func main() {
+	proxyServer := NewProxyServerTest([]string{"16.163.88.228:80", "16.163.88.228:80"}) // add your proxy IPs here
+	proxyServer.Run()
+}
